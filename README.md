@@ -1,6 +1,6 @@
 # Qiskit MCP Server
 
-A Model Context Protocol (MCP) server that enables LLMs to build and execute quantum circuits using Qiskit.
+Unofficial Model Context Protocol (MCP) server that enables LLMs to build and execute quantum circuits using Qiskit.
 
 ## Features
 

@@ -6,15 +6,15 @@ A Model Context Protocol (MCP) server that enables LLMs to build and execute qua
 
 The server provides **13 MCP tools** for comprehensive quantum circuit operations:
 
-### Core Tools (7)
+### Core Tools (8)
 
 ### 1. `create_quantum_circuit`
 Create a new quantum circuit with specified qubits and classical bits.
 
 **Parameters:**
-- `name` (string): Unique identifier for the circuit
 - `num_qubits` (int): Number of quantum bits
 - `num_classical_bits` (int, optional): Number of classical bits (defaults to num_qubits)
+- `name` (string, optional): Custom name for the circuit (auto-generated if not provided)
 
 ### 2. `add_gates`
 Add quantum gates to an existing circuit.
@@ -57,14 +57,22 @@ Get a text visualization of the quantum circuit.
 
 **Returns:** ASCII art representation of the circuit
 
-### 6. `list_circuits`
+### 6. `visualize_circuit_mermaid`
+Generate a Mermaid flowchart diagram of the quantum circuit.
+
+**Parameters:**
+- `circuit_name` (string): Name of the circuit to visualize
+
+**Returns:** Mermaid flowchart syntax representing the quantum circuit
+
+### 7. `list_circuits`
 List all created circuits with basic information.
 
 **Returns:** JSON with all circuit names and their properties
 
 ### Advanced Tools (6)
 
-### 7. `analyze_statevector`
+### 8. `analyze_statevector`
 Analyze the quantum state vector of a circuit.
 
 **Parameters:**
@@ -72,7 +80,7 @@ Analyze the quantum state vector of a circuit.
 
 **Returns:** JSON with probabilities, amplitudes, and state analysis
 
-### 8. `compute_density_matrix`
+### 9. `compute_density_matrix`
 Compute and analyze the density matrix including purity and entanglement.
 
 **Parameters:**
@@ -80,7 +88,7 @@ Compute and analyze the density matrix including purity and entanglement.
 
 **Returns:** JSON with purity, entropy, and entanglement information
 
-### 9. `optimize_circuit`
+### 10. `optimize_circuit`
 Optimize a quantum circuit using Qiskit transpiler passes.
 
 **Parameters:**
@@ -89,7 +97,7 @@ Optimize a quantum circuit using Qiskit transpiler passes.
 
 **Returns:** JSON with optimization results and performance metrics
 
-### 10. `add_advanced_gates`
+### 11. `add_advanced_gates`
 Add advanced quantum gates beyond basic H, X, Y, Z, CX.
 
 **Parameters:**
@@ -102,7 +110,7 @@ Add advanced quantum gates beyond basic H, X, Y, Z, CX.
 - Clifford gates: `s`, `sdg`, `t`, `tdg`
 - `swap`: SWAP gate
 
-### 11. `create_variational_circuit`
+### 12. `create_variational_circuit`
 Create a variational quantum circuit for quantum machine learning.
 
 **Parameters:**
@@ -113,7 +121,7 @@ Create a variational quantum circuit for quantum machine learning.
 
 **Returns:** Success message with circuit details and parameter count
 
-### 12. `implement_qft`
+### 13. `implement_qft`
 Implement Quantum Fourier Transform circuit.
 
 **Parameters:**
@@ -277,7 +285,7 @@ The server enables LLMs to interactively build quantum circuits by describing th
 
 ```
 qiskit-mcp-server/
-├── main.py                     # MCP server with 12 quantum tools
+├── main.py                     # MCP server with 13 quantum tools
 ├── pyproject.toml             # Dependencies and project config
 ├── examples/                  # Comprehensive examples and documentation
 │   ├── README.md             # Learning guide and examples overview  

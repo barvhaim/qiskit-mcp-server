@@ -192,6 +192,126 @@ async def visualize_circuit(circuit_name: str) -> str:
     return str(circuit.draw(output='text'))
 
 @mcp.tool()
+async def visualize_circuit_mermaid(circuit_name: str) -> str:
+    """
+    Generate a Mermaid flowchart diagram of the quantum circuit.
+    
+    Args:
+        circuit_name: Name of the circuit to visualize
+    
+    Returns:
+        Mermaid flowchart syntax representing the quantum circuit
+    """
+    if circuit_name not in circuits:
+        return f"Circuit '{circuit_name}' not found"
+    
+    circuit = circuits[circuit_name]
+    
+    # Start building the Mermaid flowchart
+    mermaid_lines = ["flowchart TD"]
+    
+    # Create nodes for each qubit initialization
+    num_qubits = circuit.num_qubits
+    num_clbits = circuit.num_clbits
+    
+    # Add qubit initialization nodes
+    for i in range(num_qubits):
+        mermaid_lines.append(f"    Q{i}_start[|0⟩ Q{i}]")
+    
+    # Add classical bit nodes if needed
+    for i in range(num_clbits):
+        mermaid_lines.append(f"    C{i}_start[0 C{i}]")
+    
+    # Track current state of each qubit for proper chaining
+    qubit_current_nodes = {i: f"Q{i}_start" for i in range(num_qubits)}
+    
+    # Process circuit instructions
+    gate_counter = 0
+    for instruction in circuit.data:
+        gate = instruction.operation
+        qubits = [circuit.find_bit(qubit).index for qubit in instruction.qubits]
+        clbits = [circuit.find_bit(clbit).index for clbit in instruction.clbits] if instruction.clbits else []
+        
+        gate_counter += 1
+        gate_name = gate.name.upper()
+        
+        if gate_name == 'H':
+            # Hadamard gate
+            node_id = f"H{gate_counter}"
+            mermaid_lines.append(f"    {node_id}[H Gate]")
+            mermaid_lines.append(f"    {qubit_current_nodes[qubits[0]]} --> {node_id}")
+            qubit_current_nodes[qubits[0]] = node_id
+            
+        elif gate_name in ['X', 'Y', 'Z']:
+            # Pauli gates
+            node_id = f"{gate_name}{gate_counter}"
+            mermaid_lines.append(f"    {node_id}[{gate_name} Gate]")
+            mermaid_lines.append(f"    {qubit_current_nodes[qubits[0]]} --> {node_id}")
+            qubit_current_nodes[qubits[0]] = node_id
+            
+        elif gate_name == 'CX' or gate_name == 'CNOT':
+            # CNOT gate
+            node_id = f"CNOT{gate_counter}"
+            mermaid_lines.append(f"    {node_id}[CNOT Gate]")
+            mermaid_lines.append(f"    {qubit_current_nodes[qubits[0]]} --> {node_id}")
+            mermaid_lines.append(f"    {qubit_current_nodes[qubits[1]]} --> {node_id}")
+            qubit_current_nodes[qubits[0]] = node_id
+            qubit_current_nodes[qubits[1]] = node_id
+            
+        elif gate_name == 'MEASURE':
+            # Measurement
+            node_id = f"M{gate_counter}"
+            mermaid_lines.append(f"    {node_id}[Measure]")
+            mermaid_lines.append(f"    {qubit_current_nodes[qubits[0]]} --> {node_id}")
+            if clbits:
+                mermaid_lines.append(f"    {node_id} --> C{clbits[0]}_end{gate_counter}")
+            qubit_current_nodes[qubits[0]] = node_id
+            
+        elif gate_name.startswith('R'):
+            # Rotation gates
+            params = getattr(gate, 'params', [])
+            param_str = f"({params[0]:.3f})" if params else ""
+            node_id = f"{gate_name}{gate_counter}"
+            mermaid_lines.append(f"    {node_id}[{gate_name}{param_str}]")
+            for qubit in qubits:
+                mermaid_lines.append(f"    {qubit_current_nodes[qubit]} --> {node_id}")
+                qubit_current_nodes[qubit] = node_id
+                
+        elif gate_name == 'SWAP':
+            # SWAP gate
+            node_id = f"SWAP{gate_counter}"
+            mermaid_lines.append(f"    {node_id}[SWAP Gate]")
+            mermaid_lines.append(f"    {qubit_current_nodes[qubits[0]]} --> {node_id}")
+            mermaid_lines.append(f"    {qubit_current_nodes[qubits[1]]} --> {node_id}")
+            qubit_current_nodes[qubits[0]] = node_id
+            qubit_current_nodes[qubits[1]] = node_id
+            
+        else:
+            # Generic gate
+            node_id = f"{gate_name}{gate_counter}"
+            mermaid_lines.append(f"    {node_id}[{gate_name} Gate]")
+            for qubit in qubits:
+                mermaid_lines.append(f"    {qubit_current_nodes[qubit]} --> {node_id}")
+                qubit_current_nodes[qubit] = node_id
+    
+    # Add final qubit states
+    for i in range(num_qubits):
+        mermaid_lines.append(f"    Q{i}_final[Q{i} Final]")
+        mermaid_lines.append(f"    {qubit_current_nodes[i]} --> Q{i}_final")
+    
+    # Add styling
+    mermaid_lines.extend([
+        "",
+        "    %% Styling",
+        "    classDef qubitNode fill:#e1f5fe,stroke:#01579b,stroke-width:2px",
+        "    classDef gateNode fill:#f3e5f5,stroke:#4a148c,stroke-width:2px",
+        "    classDef measureNode fill:#fff3e0,stroke:#e65100,stroke-width:2px",
+        "    classDef classicalNode fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px"
+    ])
+    
+    return "\n".join(mermaid_lines)
+
+@mcp.tool()
 def list_circuits() -> str:
     """
     List all created circuits.
